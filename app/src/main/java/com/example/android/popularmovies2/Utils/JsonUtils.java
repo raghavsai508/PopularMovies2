@@ -1,6 +1,8 @@
 package com.example.android.popularmovies2.Utils;
 
 import com.example.android.popularmovies2.Models.Movie;
+import com.example.android.popularmovies2.Models.Review;
+import com.example.android.popularmovies2.Models.Video;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -34,7 +36,6 @@ public final class JsonUtils {
         ArrayList<Movie> parsedMoviesArray;
 
         JSONObject moviesJSON = new JSONObject(movieJSONString);
-
         JSONArray resultsArray = moviesJSON.getJSONArray(MOVIES_RESULTS);
 
         parsedMoviesArray = new ArrayList<>();
@@ -77,4 +78,81 @@ public final class JsonUtils {
 
         return  parsedMoviesArray;
     }
+
+
+    // Parse reviews JSON to return array of Reviews
+    public static List<Review> getReviewsFromJSONString(String reviewJSONString) throws JSONException {
+        final String REVIEW_RESULTS = "results";
+
+        final String REVIEW_AUTHOR = "author";
+        final String REVIEW_CONTENT = "content";
+        final String REVIEW_ID = "id";
+        final String REVIEW_URL = "url";
+
+        /* Movie array to hold each movies data */
+        ArrayList<Review> parsedReviewsArray;
+
+        JSONObject reviewsJSON = new JSONObject(reviewJSONString);
+        JSONArray resultsArray = reviewsJSON.getJSONArray(REVIEW_RESULTS);
+
+        parsedReviewsArray = new ArrayList<>();
+
+        for (int i = 0; i<resultsArray.length();i++) {
+            String author, content, id, url;
+            JSONObject reviewJSONObject = resultsArray.getJSONObject(i);
+
+            author = reviewJSONObject.getString(REVIEW_AUTHOR);
+            content = reviewJSONObject.getString(REVIEW_CONTENT);
+            id = reviewJSONObject.getString(REVIEW_ID);
+            url = reviewJSONObject.getString(REVIEW_URL);
+
+            Review review = new Review(author, content, id, url);
+            parsedReviewsArray.add(review);
+        }
+
+        return parsedReviewsArray;
+    }
+
+
+    public static List<Video> getVideosFromJSONString(String videoJSONString) throws JSONException {
+        final String VIDEO_RESULTS = "results";
+
+        final String VIDEO_ID = "id";
+        final String VIDEO_ISO_639_1 = "iso_639_1";
+        final String VIDEO_ISO_3166_1 = "iso_3166_1";
+        final String VIDEO_KEY = "key";
+        final String VIDEO_NAME = "name";
+        final String VIDEO_SITE = "site";
+        final String VIDEO_SIZE = "size";
+        final String VIDEO_TYPE = "type";
+
+        /* Movie array to hold each movies data */
+        ArrayList<Video> parsedVideosArray;
+
+        JSONObject videosJSON = new JSONObject(videoJSONString);
+        JSONArray resultsArray = videosJSON.getJSONArray(VIDEO_RESULTS);
+
+        parsedVideosArray = new ArrayList<>();
+
+        for (int i = 0; i<resultsArray.length();i++) {
+            String id, iso_369_1, iso_3166_1, key, name, site, type;
+            int size;
+            JSONObject videoJSONObject = resultsArray.getJSONObject(i);
+
+            id = videoJSONObject.getString(VIDEO_ID);
+            iso_369_1 = videoJSONObject.getString(VIDEO_ISO_639_1);
+            iso_3166_1 = videoJSONObject.getString(VIDEO_ISO_3166_1);
+            key = videoJSONObject.getString(VIDEO_KEY);
+            name = videoJSONObject.getString(VIDEO_NAME);
+            site = videoJSONObject.getString(VIDEO_SITE);
+            size = videoJSONObject.getInt(VIDEO_SIZE);
+            type = videoJSONObject.getString(VIDEO_TYPE);
+
+            Video video = new Video(id, iso_369_1, iso_3166_1, key, name, site, size, type);
+            parsedVideosArray.add(video);
+        }
+
+        return parsedVideosArray;
+    }
+
 }

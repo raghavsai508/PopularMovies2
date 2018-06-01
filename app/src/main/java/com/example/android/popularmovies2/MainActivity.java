@@ -11,7 +11,10 @@ import com.example.android.popularmovies2.Adapters.RecyleAdapter;
 import com.example.android.popularmovies2.Interfaces.MovieItemClickListener;
 import com.example.android.popularmovies2.Models.Movie;
 import com.example.android.popularmovies2.Network.MoviesAsyncTask;
+import com.example.android.popularmovies2.Utils.JsonUtils;
+import com.example.android.popularmovies2.Utils.NetworkUtility;
 
+import java.net.URL;
 import java.util.List;
 
 import butterknife.BindView;
@@ -45,14 +48,15 @@ public class MainActivity extends AppCompatActivity implements MoviesAsyncTask.M
         recyclerView.setHasFixedSize(true);
         mLayoutManager = new GridLayoutManager(this,GRID_COLUMNS);
         recyclerView.setLayoutManager(mLayoutManager);
+        getMovies();
+    }
 
-        loadMovies();
-
-        moviesAsyncTask =  new MoviesAsyncTask(this);
-
+    private void getMovies() {
+        String endPoint = getString(R.string.popular_end_point_path);
+        moviesAsyncTask =  new MoviesAsyncTask(this, endPoint);
+        URL moviesURL = NetworkUtility.buildMoviesUrl(endPoint);
         // By default get results for type: popular
-        moviesAsyncTask.execute(SORT_TYPE_POPULAR);
-
+        moviesAsyncTask.execute(moviesURL);
     }
 
 
@@ -82,8 +86,12 @@ public class MainActivity extends AppCompatActivity implements MoviesAsyncTask.M
     }
 
     @Override
-    public void onPostExecute(List<Movie> movies) {
-        moviesList = movies;
-        loadMovies();
+    public void onPostExecute(String jsonString, String endPointFor) {
+        try {
+          moviesList = JsonUtils.getMoviesFromJSONString(jsonString);
+          loadMovies();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 }

@@ -1,29 +1,29 @@
 package com.example.android.popularmovies2.Network;
 
 import android.os.AsyncTask;
-import android.util.Log;
 
-import com.example.android.popularmovies2.Models.Movie;
-import com.example.android.popularmovies2.Utils.JsonUtils;
 import com.example.android.popularmovies2.Utils.NetworkUtility;
 
 import java.net.URL;
-import java.util.List;
 
-public class MoviesAsyncTask extends AsyncTask<String,Void,List<Movie>> {
+public class MoviesAsyncTask extends AsyncTask <URL,Void,String> {
 
     private MoviesListener moviesListener;
+    private String endPoint;
 
 
     // Call backs for Movies Async Task
     public interface MoviesListener {
         void onPreExecute();
-        void onPostExecute(List<Movie> movies);
+        void onPostExecute(String jsonString, String endPointFor);
     }
 
-    public MoviesAsyncTask(MoviesListener moviesListener) {
+    public MoviesAsyncTask(MoviesListener moviesListener, String endPoint) {
         this.moviesListener = moviesListener;
+        this.endPoint = endPoint;
     }
+
+
 
     @Override
     protected void onPreExecute() {
@@ -32,18 +32,14 @@ public class MoviesAsyncTask extends AsyncTask<String,Void,List<Movie>> {
     }
 
     @Override
-    protected List<Movie> doInBackground(String... params) {
-        if (params == null) {
+    protected String doInBackground(URL... urls) {
+        if (urls == null) {
             return null;
         }
 
-        String sortType = params[0];
-        URL moviesURL = NetworkUtility.buildUrl(sortType);
-
+        URL url = urls[0];
         try {
-            String movieSearchResults = NetworkUtility.getResponseFromHttpUrl(moviesURL);
-            Log.v("Results:",movieSearchResults);
-            return JsonUtils.getMoviesFromJSONString(movieSearchResults);
+            return NetworkUtility.getResponseFromHttpUrl(url);
         } catch (Exception e) {
             e.printStackTrace();
             return null;
@@ -51,8 +47,9 @@ public class MoviesAsyncTask extends AsyncTask<String,Void,List<Movie>> {
     }
 
     @Override
-    protected void onPostExecute(List<Movie> movies) {
-        super.onPostExecute(movies);
-        moviesListener.onPostExecute(movies);
+    protected void onPostExecute(String data) {
+        super.onPostExecute(data);
+        moviesListener.onPostExecute(data, endPoint);
     }
+
 }

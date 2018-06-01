@@ -17,14 +17,15 @@ public class NetworkUtility {
     private static final String MOVIE_BASE_URL = "api.themoviedb.org";
     private static final String MOVIE_APPENDED_PATH = "3/movie";
 
+
     private static final String MOVIE_API_KEY = "";
     private static final String MOVIE_QUERY_API_PARAM = "api_key";
 
 
-    public static URL buildUrl(String sortType) {
+    public static URL buildMoviesUrl(String sortType) {
 
         Uri.Builder builder = new Uri.Builder();
-        Uri uri =  builder.scheme(MOVIE_SCHEME)
+        Uri uri = builder.scheme(MOVIE_SCHEME)
                 .authority(MOVIE_BASE_URL)
                 .appendEncodedPath(MOVIE_APPENDED_PATH)
                 .appendPath(sortType)
@@ -43,6 +44,48 @@ public class NetworkUtility {
 
         return url;
 
+    }
+
+    public static URL buildTrailersUrl(Integer movieId, String trailersEndPoint) {
+        Uri.Builder builder = new Uri.Builder();
+        Uri uri = builder.scheme(MOVIE_SCHEME)
+                .authority(MOVIE_BASE_URL)
+                .appendEncodedPath(MOVIE_APPENDED_PATH)
+                .appendPath(movieId.toString())
+                .appendPath(trailersEndPoint)
+                .appendQueryParameter(MOVIE_QUERY_API_PARAM,MOVIE_API_KEY)
+                .build();
+
+        URL url = null;
+        try {
+            url = new URL(uri.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Log.v(TAG, "Built URI " + url);
+        return url;
+    }
+
+    public static URL buildReviewsUrl(Integer movieId, String reviewsEndPoint) {
+        Uri.Builder builder = new Uri.Builder();
+        Uri uri = builder.scheme(MOVIE_SCHEME)
+                .authority(MOVIE_BASE_URL)
+                .appendEncodedPath(MOVIE_APPENDED_PATH)
+                .appendPath(movieId.toString())
+                .appendPath(reviewsEndPoint)
+                .appendQueryParameter(MOVIE_QUERY_API_PARAM,MOVIE_API_KEY)
+                .build();
+
+        URL url = null;
+        try {
+            url = new URL(uri.toString());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+        Log.v(TAG, "Built URI " + url);
+        return url;
     }
 
 
