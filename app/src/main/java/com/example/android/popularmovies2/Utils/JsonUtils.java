@@ -45,7 +45,7 @@ public final class JsonUtils {
             Boolean video, adult;
             String title, posterPath, originalLanguage, originalTitle, backdropPath, overview, releaseDate;
             Double popularity;
-            int[] genreIDs = null;
+            int[] genreIDs;
 
             JSONObject movieJSONObject = resultsArray.getJSONObject(i);
             voteCount = movieJSONObject.getInt(MOVIE_VOTE_COUNT);
