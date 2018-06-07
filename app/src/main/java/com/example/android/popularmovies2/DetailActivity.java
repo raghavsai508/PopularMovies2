@@ -1,5 +1,7 @@
 package com.example.android.popularmovies2;
 
+import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Bundle;
@@ -7,8 +9,10 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.View;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.example.android.popularmovies2.Adapters.ReviewsAdapter;
 import com.example.android.popularmovies2.Adapters.TrailersAdapter;
@@ -20,6 +24,7 @@ import com.example.android.popularmovies2.Models.Video;
 import com.example.android.popularmovies2.Network.MoviesAsyncTask;
 import com.example.android.popularmovies2.Utils.JsonUtils;
 import com.example.android.popularmovies2.Utils.NetworkUtility;
+import com.example.android.popularmovies2.data.PopularMoviesContract;
 import com.squareup.picasso.Picasso;
 
 import java.net.URL;
@@ -55,11 +60,16 @@ public class DetailActivity extends AppCompatActivity implements MoviesAsyncTask
     @BindView(R.id.recyclerViewReviews)
     RecyclerView mRecyclerViewReviews;
 
+    @BindView(R.id.favorite)
+    ImageView mFavorite;
+
     private RecyclerView.Adapter mRecycleReviewAdapter;
     private RecyclerView.Adapter mRecycleTrailerAdapter;
+    private Movie movie;
     private MoviesAsyncTask moviesAsyncTask;
     private List<Review> reviewsList;
     private List<Video> trailersList;
+    private Boolean isFavoriteClicked = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -75,7 +85,7 @@ public class DetailActivity extends AppCompatActivity implements MoviesAsyncTask
         Intent intentCalled = getIntent();
         if (intentCalled != null) {
             if (intentCalled.hasExtra(INTENT_KEY)) {
-                Movie movie = intentCalled.getParcelableExtra(INTENT_KEY);
+                movie = intentCalled.getParcelableExtra(INTENT_KEY);
                 Log.d("hello","hhee");
 
                 String imageURL = "http://image.tmdb.org/t/p/w185"+movie.getPosterPath();
@@ -151,6 +161,37 @@ public class DetailActivity extends AppCompatActivity implements MoviesAsyncTask
         moviesAsyncTask.execute(reviewsUrl);
     }
 
+
+    public void favoriteClick(View view) {
+
+        if (movie == null) {
+            return;
+        }
+
+        int favoriteResource;
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(PopularMoviesContract.PopularMoviesEntry.COLUMN_WEATHER_ID, movie.getId());
+        Uri uri = PopularMoviesContract.PopularMoviesEntry.CONTENT_URI;
+        uri = uri.buildUpon().appendPath(Integer.toString(movie.getId())).build();
+        ContentResolver contentResolver = getContentResolver();
+        if (!isFavoriteClicked) {
+            favoriteResource = android.R.drawable.btn_star_big_on;
+            Uri insertedUri = contentResolver.insert(uri, contentValues);
+            if(uri != null) {
+                Toast.makeText(getBaseContext(), insertedUri.toString(), Toast.LENGTH_LONG).show();
+            }
+        } else {
+            favoriteResource = android.R.drawable.btn_star_big_off;
+            int deletedID = contentResolver.delete(uri, null, null);
+            if(deletedID != 0) {
+                Toast.makeText(getBaseContext(), Integer.toString(deletedID), Toast.LENGTH_LONG).show();
+            }
+        }
+        isFavoriteClicked = !isFavoriteClicked;
+        mFavorite.setImageResource(favoriteResource);
+    }
+
+    // MoviesAsyncTask.MoviesListener Methods
     @Override
     public void onPreExecute() {
 

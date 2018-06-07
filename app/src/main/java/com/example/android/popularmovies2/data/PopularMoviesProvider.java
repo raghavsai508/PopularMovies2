@@ -118,15 +118,11 @@ public class PopularMoviesProvider extends ContentProvider {
         final SQLiteDatabase db = mPopularMoviesDbHelper.getWritableDatabase();
         int deletedRows;
 
-        if (selection == null) {
-            selection = "1";
-        }
-
         int match = sUriMatcher.match(uri);
         switch (match) {
             case FAVORITES_WITH_ID:
-                String id = uri.getPathSegments().get(1);
-                deletedRows = db.delete(PopularMoviesContract.PopularMoviesEntry.TABLE_NAME, "_id=?", new String[]{id});
+                String movieID = uri.getPathSegments().get(1);
+                deletedRows = db.delete(PopularMoviesContract.PopularMoviesEntry.TABLE_NAME, PopularMoviesContract.PopularMoviesEntry.COLUMN_WEATHER_ID+"=?", new String[]{movieID});
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);
