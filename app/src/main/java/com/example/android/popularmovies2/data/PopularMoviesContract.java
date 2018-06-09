@@ -17,7 +17,8 @@ public class PopularMoviesContract {
                                                 .build();
 
         public static final String TABLE_NAME = "favorites";
-        public static final String COLUMN_WEATHER_ID = "movie_id";
+        public static final String COLUMN_MOVIE_ID = "movie_id";
+        public static final String COLUMN_MOVIE_TITLE = "movie_title";
 
     }
 }

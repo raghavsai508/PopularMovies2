@@ -6,6 +6,10 @@
 
     <string name="vote_average">%1$d/10</string>
 
+    <!-- Menu Items Title -->
+    <string name="action_sort">Sort</string>
+
+
     <!-- End Points -->
     <string name="popular_end_point_path">popular</string>
     <string name="top_rated_end_point_path">top_rated</string>

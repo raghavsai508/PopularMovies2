@@ -1,11 +1,25 @@
 package com.example.android.popularmovies2;
 
 import android.content.Intent;
+import android.database.Cursor;
+import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.util.Log;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
+import android.view.View;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
 
 import com.example.android.popularmovies2.Adapters.RecyleAdapter;
 import com.example.android.popularmovies2.Interfaces.MovieItemClickListener;
@@ -13,30 +27,52 @@ import com.example.android.popularmovies2.Models.Movie;
 import com.example.android.popularmovies2.Network.MoviesAsyncTask;
 import com.example.android.popularmovies2.Utils.JsonUtils;
 import com.example.android.popularmovies2.Utils.NetworkUtility;
+import com.example.android.popularmovies2.data.PopularMoviesContract;
 
 import java.net.URL;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MainActivity extends AppCompatActivity implements MoviesAsyncTask.MoviesListener {
+public class MainActivity extends AppCompatActivity implements MoviesAsyncTask.MoviesListener, LoaderManager.LoaderCallbacks<Cursor> {
 
     /* Bind Views: ButterKnife */
     @BindView(R.id.recyclerView)
     RecyclerView recyclerView;
 
+    @BindView(R.id.spinner)
+    Spinner mSpinner;
+
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     private List<Movie> moviesList;
     private MoviesAsyncTask moviesAsyncTask;
+    private Uri mUri;
 
 
     private static int GRID_COLUMNS = 2;
+    private static final int ID_MAIN_ACTIVITY_LOADER = 123;
+
     private static final String SORT_TYPE_POPULAR = "popular";
     private static final String INTENT_KEY = "movie_detail";
     private static final String SORT_TYPE_TOP_RATED = "top_rated";
+    private static final String SORT_TYPE_FAVORITES = "favorites";
     private static final String SORT_TYPE_DEFAULT = "Select Sort Type";
+
+
+    public static final String[] MOVIE_DETAIL_PROJECTION = {
+            PopularMoviesContract.PopularMoviesEntry.COLUMN_MOVIE_ID,
+            PopularMoviesContract.PopularMoviesEntry.COLUMN_MOVIE_TITLE
+    };
+
+    public static final int INDEX_MOVIE_ID = 0;
+    public static final int INDEX_MOVIE_TITLE = 1;
+
 
 
     @Override
@@ -45,10 +81,75 @@ public class MainActivity extends AppCompatActivity implements MoviesAsyncTask.M
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        recyclerView.setHasFixedSize(true);
-        mLayoutManager = new GridLayoutManager(this,GRID_COLUMNS);
-        recyclerView.setLayoutManager(mLayoutManager);
-        getMovies();
+        if (savedInstanceState == null) {
+            recyclerView.setHasFixedSize(true);
+            mLayoutManager = new GridLayoutManager(this,GRID_COLUMNS);
+            recyclerView.setLayoutManager(mLayoutManager);
+            mUri = PopularMoviesContract.PopularMoviesEntry.CONTENT_URI;
+            getMovies();
+            setupSpinner();
+        } else {
+
+        }
+
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+
+        super.onSaveInstanceState(outState);
+    }
+
+    private void setupSpinner() {
+        final Map<String, String> map = new HashMap<>();
+        map.put("Top Rated", SORT_TYPE_TOP_RATED);
+        map.put("Most Popular", SORT_TYPE_POPULAR);
+        map.put("My Favorites", SORT_TYPE_FAVORITES);
+
+        Set<String> spinnerKeys = map.keySet();
+        Log.v("spinner keys",spinnerKeys.toString());
+        String[] spinnerArray = spinnerKeys.toArray(new String[spinnerKeys.size()+1]);
+        int index = 0;
+        spinnerArray[index++] = SORT_TYPE_DEFAULT;
+        for(String spinnerKey: spinnerKeys) {
+            spinnerArray[index++] = spinnerKey;
+        }
+
+        mSpinner = findViewById(R.id.spinner);
+
+        ArrayAdapter spinnerAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_item, spinnerArray);
+        spinnerAdapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        mSpinner.setAdapter(spinnerAdapter);
+
+        mSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (position == 0) {
+                    return;
+                }
+                String item = parent.getItemAtPosition(position).toString();
+                String mappedSpinner = map.get(item);
+                Log.v("Spinner:",mappedSpinner);
+                if (mappedSpinner.equals(SORT_TYPE_FAVORITES)) {
+                    getSupportLoaderManager().initLoader(ID_MAIN_ACTIVITY_LOADER, null, MainActivity.this);
+                } else {
+                    moviesAsyncTask = new MoviesAsyncTask(MainActivity.this, mappedSpinner);
+                    URL moviesURL = NetworkUtility.buildMoviesUrl(mappedSpinner);
+                    moviesAsyncTask.execute(moviesURL);
+                    mSpinner.setVisibility(View.GONE);
+                }
+            }
+
+            @Override
+            public void onNothingSelected(AdapterView<?> parent) {
+                mSpinner.setVisibility(View.GONE);
+            }
+        });
+    }
+
+    private void showSpinner() {
+        mSpinner.setVisibility(View.VISIBLE);
+        mSpinner.performClick();
     }
 
     private void getMovies() {
@@ -79,7 +180,7 @@ public class MainActivity extends AppCompatActivity implements MoviesAsyncTask.M
     }
 
 
-    /* MoviesListener call back methods */
+    //region MoviesListener call back methods
     @Override
     public void onPreExecute() {
 
@@ -94,4 +195,78 @@ public class MainActivity extends AppCompatActivity implements MoviesAsyncTask.M
             e.printStackTrace();
         }
     }
+    //endregion
+
+    //region Cursor Loaders methods
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int loaderId, @Nullable Bundle args) {
+        switch (loaderId) {
+            case ID_MAIN_ACTIVITY_LOADER:
+                return new CursorLoader(this,
+                        mUri,
+                        MOVIE_DETAIL_PROJECTION,
+                        null ,
+                        null,
+                        null);
+            default:
+                throw new RuntimeException("Loader Not Implemented: " + loaderId);
+        }
+    }
+
+    @Override
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
+
+        if (data.getCount() == 0) {
+            return;
+        }
+
+        ArrayList<Movie> filteredMoviesArray = new ArrayList<>();
+
+        try {
+            while (data.moveToNext()) {
+                final String movieId = data.getString(INDEX_MOVIE_ID);
+                for (Movie movie: moviesList) {
+                    if (movieId.equals(Integer.toString(movie.getId()))) {
+                        filteredMoviesArray.add(movie);
+                    }
+                }
+            }
+
+            if (filteredMoviesArray.size() > 0) {
+                moviesList = filteredMoviesArray;
+                loadMovies();
+            }
+
+        } finally {
+            data.close();
+        }
+    }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+
+    }
+    //endregion
+
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        MenuInflater menuInflater = getMenuInflater();
+        menuInflater.inflate(R.menu.settings, menu);
+        return true;
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        int id = item.getItemId();
+
+        if (id == R.id.action_sort) {
+            showSpinner();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
+    }
+
 }

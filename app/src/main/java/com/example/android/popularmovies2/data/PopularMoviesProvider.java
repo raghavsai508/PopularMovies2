@@ -49,7 +49,7 @@ public class PopularMoviesProvider extends ContentProvider {
                 cursor = mPopularMoviesDbHelper.getReadableDatabase().query(
                         PopularMoviesContract.PopularMoviesEntry.TABLE_NAME,
                         projection,
-                        PopularMoviesContract.PopularMoviesEntry.COLUMN_WEATHER_ID + " = ?",
+                        PopularMoviesContract.PopularMoviesEntry.COLUMN_MOVIE_ID + " = ?",
                         selectionArguments,
                         null,
                         null,
@@ -122,7 +122,7 @@ public class PopularMoviesProvider extends ContentProvider {
         switch (match) {
             case FAVORITES_WITH_ID:
                 String movieID = uri.getPathSegments().get(1);
-                deletedRows = db.delete(PopularMoviesContract.PopularMoviesEntry.TABLE_NAME, PopularMoviesContract.PopularMoviesEntry.COLUMN_WEATHER_ID+"=?", new String[]{movieID});
+                deletedRows = db.delete(PopularMoviesContract.PopularMoviesEntry.TABLE_NAME, PopularMoviesContract.PopularMoviesEntry.COLUMN_MOVIE_ID +"=?", new String[]{movieID});
                 break;
             default:
                 throw new UnsupportedOperationException("Unknown uri: " + uri);

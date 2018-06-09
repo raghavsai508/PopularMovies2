@@ -3,8 +3,14 @@ package com.example.android.popularmovies2;
 import android.content.ContentResolver;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
+import android.support.v4.app.LoaderManager;
+import android.support.v4.content.CursorLoader;
+import android.support.v4.content.Loader;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -33,11 +39,21 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class DetailActivity extends AppCompatActivity implements MoviesAsyncTask.MoviesListener{
+public class DetailActivity extends AppCompatActivity implements MoviesAsyncTask.MoviesListener, LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String INTENT_KEY = "movie_detail";
-
     private static final String VIDEO_URL = "https://www.youtube.com/watch?v=";
+    private static final int ID_DETAIL_LOADER = 353;
+
+
+    public static final String[] MOVIE_DETAIL_PROJECTION = {
+            PopularMoviesContract.PopularMoviesEntry.COLUMN_MOVIE_ID,
+            PopularMoviesContract.PopularMoviesEntry.COLUMN_MOVIE_TITLE
+    };
+
+    public static final int INDEX_MOVIE_ID = 0;
+    public static final int INDEX_MOVIE_TITLE = 1;
+
 
     @BindView(R.id.iv_poster)
     ImageView mImageViewPoster;
@@ -66,6 +82,7 @@ public class DetailActivity extends AppCompatActivity implements MoviesAsyncTask
     private RecyclerView.Adapter mRecycleReviewAdapter;
     private RecyclerView.Adapter mRecycleTrailerAdapter;
     private Movie movie;
+    private Uri mUri;
     private MoviesAsyncTask moviesAsyncTask;
     private List<Review> reviewsList;
     private List<Video> trailersList;
@@ -99,6 +116,11 @@ public class DetailActivity extends AppCompatActivity implements MoviesAsyncTask
                 setupRecyclerViews();
                 getTrailersFor(movie.getId());
                 getReviewsFor(movie.getId());
+
+                mUri = PopularMoviesContract.PopularMoviesEntry.CONTENT_URI;
+                mUri = mUri.buildUpon().appendPath(Integer.toString(movie.getId())).build();
+
+                getSupportLoaderManager().initLoader(ID_DETAIL_LOADER, null, this);
             }
         }
     }
@@ -168,28 +190,42 @@ public class DetailActivity extends AppCompatActivity implements MoviesAsyncTask
             return;
         }
 
-        int favoriteResource;
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(PopularMoviesContract.PopularMoviesEntry.COLUMN_WEATHER_ID, movie.getId());
-        Uri uri = PopularMoviesContract.PopularMoviesEntry.CONTENT_URI;
-        uri = uri.buildUpon().appendPath(Integer.toString(movie.getId())).build();
         ContentResolver contentResolver = getContentResolver();
+        ContentValues contentValues = new ContentValues();
+        contentValues.put(PopularMoviesContract.PopularMoviesEntry.COLUMN_MOVIE_ID, movie.getId());
+        contentValues.put(PopularMoviesContract.PopularMoviesEntry.COLUMN_MOVIE_TITLE, movie.getTitle());
+
+
+
         if (!isFavoriteClicked) {
-            favoriteResource = android.R.drawable.btn_star_big_on;
-            Uri insertedUri = contentResolver.insert(uri, contentValues);
-            if(uri != null) {
+            Uri insertedUri = contentResolver.insert(mUri, contentValues);
+            if(insertedUri != null) {
                 Toast.makeText(getBaseContext(), insertedUri.toString(), Toast.LENGTH_LONG).show();
             }
         } else {
-            favoriteResource = android.R.drawable.btn_star_big_off;
-            int deletedID = contentResolver.delete(uri, null, null);
+            int deletedID = contentResolver.delete(mUri, null, null);
             if(deletedID != 0) {
                 Toast.makeText(getBaseContext(), Integer.toString(deletedID), Toast.LENGTH_LONG).show();
             }
         }
+
         isFavoriteClicked = !isFavoriteClicked;
+        changeFavoriteImage();
+
+    }
+
+    private void changeFavoriteImage() {
+        int favoriteResource;
+
+        if (isFavoriteClicked) {
+            favoriteResource = android.R.drawable.btn_star_big_on;
+        } else {
+            favoriteResource = android.R.drawable.btn_star_big_off;
+        }
+
         mFavorite.setImageResource(favoriteResource);
     }
+
 
     // MoviesAsyncTask.MoviesListener Methods
     @Override
@@ -214,5 +250,43 @@ public class DetailActivity extends AppCompatActivity implements MoviesAsyncTask
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
+
+    @NonNull
+    @Override
+    public Loader<Cursor> onCreateLoader(int loaderId, @Nullable Bundle args) {
+        switch (loaderId) {
+            case ID_DETAIL_LOADER:
+                return new CursorLoader(this,
+                        mUri,
+                        MOVIE_DETAIL_PROJECTION,
+                        null ,
+                        null,
+                        null);
+            default:
+                throw new RuntimeException("Loader Not Implemented: " + loaderId);
+        }
+
+    }
+
+    @Override
+    public void onLoadFinished(@NonNull Loader<Cursor> loader, Cursor data) {
+        boolean cursorHasValidData = false;
+        if (data != null && data.moveToFirst()) {
+            cursorHasValidData = true;
+        }
+
+        if (!cursorHasValidData) {
+            return;
+        }
+
+        // If it is moved to first then it is favorite
+        isFavoriteClicked = true;
+        changeFavoriteImage();
+    }
+
+    @Override
+    public void onLoaderReset(@NonNull Loader<Cursor> loader) {
+
     }
 }
