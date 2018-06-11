@@ -1,6 +1,7 @@
 package com.example.android.popularmovies2;
 
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -25,6 +26,7 @@ import com.example.android.popularmovies2.Adapters.RecyleAdapter;
 import com.example.android.popularmovies2.Interfaces.MovieItemClickListener;
 import com.example.android.popularmovies2.Models.Movie;
 import com.example.android.popularmovies2.Network.MoviesAsyncTask;
+import com.example.android.popularmovies2.Network.MoviesLoaderCallbacks;
 import com.example.android.popularmovies2.Utils.JsonUtils;
 import com.example.android.popularmovies2.Utils.NetworkUtility;
 import com.example.android.popularmovies2.data.PopularMoviesContract;
@@ -39,7 +41,7 @@ import java.util.Set;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class MainActivity extends AppCompatActivity implements MoviesAsyncTask.MoviesListener, LoaderManager.LoaderCallbacks<Cursor> {
+public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>, MoviesLoaderCallbacks.MoviesLoaderListener {
 
     /* Bind Views: ButterKnife */
     @BindView(R.id.recyclerView)
@@ -57,6 +59,7 @@ public class MainActivity extends AppCompatActivity implements MoviesAsyncTask.M
 
     private static int GRID_COLUMNS = 2;
     private static final int ID_MAIN_ACTIVITY_LOADER = 123;
+    private static final int ID_MAIN_ACTIVITY_DATALOADER = 111;
 
     private static final String SORT_TYPE_POPULAR = "popular";
     private static final String INTENT_KEY = "movie_detail";
@@ -74,6 +77,11 @@ public class MainActivity extends AppCompatActivity implements MoviesAsyncTask.M
     public static final int INDEX_MOVIE_TITLE = 1;
 
 
+    @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+
+        super.onConfigurationChanged(newConfig);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -81,17 +89,18 @@ public class MainActivity extends AppCompatActivity implements MoviesAsyncTask.M
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-        if (savedInstanceState == null) {
-            recyclerView.setHasFixedSize(true);
-            mLayoutManager = new GridLayoutManager(this,GRID_COLUMNS);
-            recyclerView.setLayoutManager(mLayoutManager);
-            mUri = PopularMoviesContract.PopularMoviesEntry.CONTENT_URI;
-            getMovies();
-            setupSpinner();
-        } else {
+//        if (savedInstanceState == null) {
+//
+//        } else {
+//
+//        }
 
-        }
-
+        recyclerView.setHasFixedSize(true);
+        mLayoutManager = new GridLayoutManager(this,GRID_COLUMNS);
+        recyclerView.setLayoutManager(mLayoutManager);
+        mUri = PopularMoviesContract.PopularMoviesEntry.CONTENT_URI;
+        getMovies();
+        setupSpinner();
     }
 
     @Override
@@ -133,10 +142,12 @@ public class MainActivity extends AppCompatActivity implements MoviesAsyncTask.M
                 if (mappedSpinner.equals(SORT_TYPE_FAVORITES)) {
                     getSupportLoaderManager().initLoader(ID_MAIN_ACTIVITY_LOADER, null, MainActivity.this);
                 } else {
-                    moviesAsyncTask = new MoviesAsyncTask(MainActivity.this, mappedSpinner);
+//                    moviesAsyncTask = new MoviesAsyncTask(MainActivity.this, mappedSpinner);
                     URL moviesURL = NetworkUtility.buildMoviesUrl(mappedSpinner);
-                    moviesAsyncTask.execute(moviesURL);
+//                    moviesAsyncTask.execute(moviesURL);
                     mSpinner.setVisibility(View.GONE);
+                    MoviesLoaderCallbacks moviesLoaderCallbacks = new MoviesLoaderCallbacks(MainActivity.this, moviesURL, mappedSpinner, MainActivity.this);
+                    getSupportLoaderManager().restartLoader(ID_MAIN_ACTIVITY_DATALOADER, null, moviesLoaderCallbacks);
                 }
             }
 
@@ -154,10 +165,14 @@ public class MainActivity extends AppCompatActivity implements MoviesAsyncTask.M
 
     private void getMovies() {
         String endPoint = getString(R.string.popular_end_point_path);
-        moviesAsyncTask =  new MoviesAsyncTask(this, endPoint);
+//        moviesAsyncTask =  new MoviesAsyncTask(this, endPoint);
         URL moviesURL = NetworkUtility.buildMoviesUrl(endPoint);
-        // By default get results for type: popular
-        moviesAsyncTask.execute(moviesURL);
+//        // By default get results for type: popular
+//        moviesAsyncTask.execute(moviesURL);
+
+        MoviesLoaderCallbacks moviesLoaderCallbacks = new MoviesLoaderCallbacks(this, moviesURL, endPoint, this);
+        getSupportLoaderManager().initLoader(ID_MAIN_ACTIVITY_DATALOADER, null, moviesLoaderCallbacks);
+
     }
 
 
