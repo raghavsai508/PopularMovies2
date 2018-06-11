@@ -20,12 +20,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
+import android.widget.ProgressBar;
 import android.widget.Spinner;
 
 import com.example.android.popularmovies2.Adapters.RecyleAdapter;
 import com.example.android.popularmovies2.Interfaces.MovieItemClickListener;
 import com.example.android.popularmovies2.Models.Movie;
-import com.example.android.popularmovies2.Network.MoviesAsyncTask;
 import com.example.android.popularmovies2.Network.MoviesLoaderCallbacks;
 import com.example.android.popularmovies2.Utils.JsonUtils;
 import com.example.android.popularmovies2.Utils.NetworkUtility;
@@ -50,12 +50,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     @BindView(R.id.spinner)
     Spinner mSpinner;
 
+    @BindView(R.id.progressBar)
+    ProgressBar mProgressBar;
+
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     private List<Movie> moviesList;
-    private MoviesAsyncTask moviesAsyncTask;
     private Uri mUri;
-
 
     private static int GRID_COLUMNS = 2;
     private static final int ID_MAIN_ACTIVITY_LOADER = 123;
@@ -74,7 +75,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     };
 
     public static final int INDEX_MOVIE_ID = 0;
-    public static final int INDEX_MOVIE_TITLE = 1;
 
 
     @Override
@@ -89,24 +89,11 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         setContentView(R.layout.activity_main);
         ButterKnife.bind(this);
 
-//        if (savedInstanceState == null) {
-//
-//        } else {
-//
-//        }
-
-        recyclerView.setHasFixedSize(true);
         mLayoutManager = new GridLayoutManager(this,GRID_COLUMNS);
         recyclerView.setLayoutManager(mLayoutManager);
         mUri = PopularMoviesContract.PopularMoviesEntry.CONTENT_URI;
         getMovies();
         setupSpinner();
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-
-        super.onSaveInstanceState(outState);
     }
 
     private void setupSpinner() {
@@ -142,9 +129,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 if (mappedSpinner.equals(SORT_TYPE_FAVORITES)) {
                     getSupportLoaderManager().initLoader(ID_MAIN_ACTIVITY_LOADER, null, MainActivity.this);
                 } else {
-//                    moviesAsyncTask = new MoviesAsyncTask(MainActivity.this, mappedSpinner);
                     URL moviesURL = NetworkUtility.buildMoviesUrl(mappedSpinner);
-//                    moviesAsyncTask.execute(moviesURL);
                     mSpinner.setVisibility(View.GONE);
                     MoviesLoaderCallbacks moviesLoaderCallbacks = new MoviesLoaderCallbacks(MainActivity.this, moviesURL, mappedSpinner, MainActivity.this);
                     getSupportLoaderManager().restartLoader(ID_MAIN_ACTIVITY_DATALOADER, null, moviesLoaderCallbacks);
@@ -165,14 +150,10 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     private void getMovies() {
         String endPoint = getString(R.string.popular_end_point_path);
-//        moviesAsyncTask =  new MoviesAsyncTask(this, endPoint);
         URL moviesURL = NetworkUtility.buildMoviesUrl(endPoint);
-//        // By default get results for type: popular
-//        moviesAsyncTask.execute(moviesURL);
-
+        // By default get results for type: popular
         MoviesLoaderCallbacks moviesLoaderCallbacks = new MoviesLoaderCallbacks(this, moviesURL, endPoint, this);
         getSupportLoaderManager().initLoader(ID_MAIN_ACTIVITY_DATALOADER, null, moviesLoaderCallbacks);
-
     }
 
 
@@ -195,14 +176,15 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
 
 
-    //region MoviesListener call back methods
+    //region MoviesLoaderCallbacks.MoviesLoaderListener call back methods
     @Override
     public void onPreExecute() {
-
+        mProgressBar.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void onPostExecute(String jsonString, String endPointFor) {
+        mProgressBar.setVisibility(View.INVISIBLE);
         try {
           moviesList = JsonUtils.getMoviesFromJSONString(jsonString);
           loadMovies();

@@ -17,6 +17,7 @@ import android.support.v7.widget.RecyclerView;
 import android.util.Log;
 import android.view.View;
 import android.widget.ImageView;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -27,7 +28,7 @@ import com.example.android.popularmovies2.Interfaces.TrailerItemClickListener;
 import com.example.android.popularmovies2.Models.Movie;
 import com.example.android.popularmovies2.Models.Review;
 import com.example.android.popularmovies2.Models.Video;
-import com.example.android.popularmovies2.Network.MoviesAsyncTask;
+import com.example.android.popularmovies2.Network.MoviesLoaderCallbacks;
 import com.example.android.popularmovies2.Utils.JsonUtils;
 import com.example.android.popularmovies2.Utils.NetworkUtility;
 import com.example.android.popularmovies2.data.PopularMoviesContract;
@@ -39,20 +40,20 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 
-public class DetailActivity extends AppCompatActivity implements MoviesAsyncTask.MoviesListener, LoaderManager.LoaderCallbacks<Cursor> {
+public class DetailActivity extends AppCompatActivity implements MoviesLoaderCallbacks.MoviesLoaderListener, LoaderManager.LoaderCallbacks<Cursor> {
 
     private static final String INTENT_KEY = "movie_detail";
     private static final String VIDEO_URL = "https://www.youtube.com/watch?v=";
     private static final int ID_DETAIL_LOADER = 353;
+
+    private static final int ID_DETAIL_REVIEWS_LOADER = 351;
+    private static final int ID_DETAIL_TRAILERS_LOADER = 352;
 
 
     public static final String[] MOVIE_DETAIL_PROJECTION = {
             PopularMoviesContract.PopularMoviesEntry.COLUMN_MOVIE_ID,
             PopularMoviesContract.PopularMoviesEntry.COLUMN_MOVIE_TITLE
     };
-
-    public static final int INDEX_MOVIE_ID = 0;
-    public static final int INDEX_MOVIE_TITLE = 1;
 
 
     @BindView(R.id.iv_poster)
@@ -79,11 +80,13 @@ public class DetailActivity extends AppCompatActivity implements MoviesAsyncTask
     @BindView(R.id.favorite)
     ImageView mFavorite;
 
+    @BindView(R.id.progressBar)
+    ProgressBar mProgressBar;
+
     private RecyclerView.Adapter mRecycleReviewAdapter;
     private RecyclerView.Adapter mRecycleTrailerAdapter;
     private Movie movie;
     private Uri mUri;
-    private MoviesAsyncTask moviesAsyncTask;
     private List<Review> reviewsList;
     private List<Video> trailersList;
     private Boolean isFavoriteClicked = false;
@@ -136,9 +139,9 @@ public class DetailActivity extends AppCompatActivity implements MoviesAsyncTask
 
     private void getTrailersFor(Integer movieID) {
         String endPoint = getString(R.string.trailers_end_point_path);
-        moviesAsyncTask =  new MoviesAsyncTask(this, endPoint);
         URL trailersUrl = NetworkUtility.buildTrailersUrl(movieID, endPoint);
-        moviesAsyncTask.execute(trailersUrl);
+        MoviesLoaderCallbacks moviesLoaderCallbacks = new MoviesLoaderCallbacks(this, trailersUrl, endPoint, this);
+        getSupportLoaderManager().initLoader(ID_DETAIL_TRAILERS_LOADER, null, moviesLoaderCallbacks);
     }
 
 
@@ -178,9 +181,9 @@ public class DetailActivity extends AppCompatActivity implements MoviesAsyncTask
 
     private void getReviewsFor(Integer movieID) {
         String endPoint = getString(R.string.reviews_end_point_path);
-        moviesAsyncTask =  new MoviesAsyncTask(this, endPoint);
         URL reviewsUrl = NetworkUtility.buildReviewsUrl(movieID, endPoint);
-        moviesAsyncTask.execute(reviewsUrl);
+        MoviesLoaderCallbacks moviesLoaderCallbacks = new MoviesLoaderCallbacks(this, reviewsUrl, endPoint, this);
+        getSupportLoaderManager().initLoader(ID_DETAIL_REVIEWS_LOADER, null, moviesLoaderCallbacks);
     }
 
 
@@ -227,14 +230,15 @@ public class DetailActivity extends AppCompatActivity implements MoviesAsyncTask
     }
 
 
-    // MoviesAsyncTask.MoviesListener Methods
+    // MoviesLoaderCallbacks.MoviesLoaderListener Methods
     @Override
     public void onPreExecute() {
-
+        mProgressBar.setVisibility(View.VISIBLE);
     }
 
     @Override
     public void onPostExecute(String jsonString, String endPointFor) {
+        mProgressBar.setVisibility(View.INVISIBLE);
         try {
             if (endPointFor.equals(getString(R.string.reviews_end_point_path))) {
                 reviewsList = JsonUtils.getReviewsFromJSONString(jsonString);
