@@ -42,10 +42,11 @@ import butterknife.ButterKnife;
 
 public class DetailActivity extends AppCompatActivity implements MoviesLoaderCallbacks.MoviesLoaderListener, LoaderManager.LoaderCallbacks<Cursor> {
 
+    //region Static variables
     private static final String INTENT_KEY = "movie_detail";
     private static final String VIDEO_URL = "https://www.youtube.com/watch?v=";
-    private static final int ID_DETAIL_LOADER = 353;
 
+    private static final int ID_DETAIL_LOADER = 353;
     private static final int ID_DETAIL_REVIEWS_LOADER = 351;
     private static final int ID_DETAIL_TRAILERS_LOADER = 352;
 
@@ -54,8 +55,9 @@ public class DetailActivity extends AppCompatActivity implements MoviesLoaderCal
             PopularMoviesContract.PopularMoviesEntry.COLUMN_MOVIE_ID,
             PopularMoviesContract.PopularMoviesEntry.COLUMN_MOVIE_TITLE
     };
+    //endregion
 
-
+    //region Binder Variables
     @BindView(R.id.iv_poster)
     ImageView mImageViewPoster;
 
@@ -82,15 +84,17 @@ public class DetailActivity extends AppCompatActivity implements MoviesLoaderCal
 
     @BindView(R.id.progressBar)
     ProgressBar mProgressBar;
+    //endregion
 
-    private RecyclerView.Adapter mRecycleReviewAdapter;
-    private RecyclerView.Adapter mRecycleTrailerAdapter;
+    //region Private Variables
     private Movie movie;
     private Uri mUri;
     private List<Review> reviewsList;
     private List<Video> trailersList;
     private Boolean isFavoriteClicked = false;
+    //endregion
 
+    //region Activity Lifecycle Methods
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -100,7 +104,19 @@ public class DetailActivity extends AppCompatActivity implements MoviesLoaderCal
 
         loadMovieDetails();
     }
+    //endregion
 
+    //region UI Setup methods
+    private void setupRecyclerViews() {
+        RecyclerView.LayoutManager layoutManagerReviews = new LinearLayoutManager(this);
+        mRecyclerViewReviews.setLayoutManager(layoutManagerReviews);
+
+        RecyclerView.LayoutManager layoutManagerTrailers = new LinearLayoutManager(this);
+        mRecyclerViewTrailers.setLayoutManager(layoutManagerTrailers);
+    }
+    //endregion
+
+    //region Movie Details
     private void loadMovieDetails() {
         Intent intentCalled = getIntent();
         if (intentCalled != null) {
@@ -127,16 +143,9 @@ public class DetailActivity extends AppCompatActivity implements MoviesLoaderCal
             }
         }
     }
+    //endregion
 
-    private void setupRecyclerViews() {
-        RecyclerView.LayoutManager layoutManagerReviews = new LinearLayoutManager(this);
-        mRecyclerViewReviews.setLayoutManager(layoutManagerReviews);
-
-        RecyclerView.LayoutManager layoutManagerTrailers = new LinearLayoutManager(this);
-        mRecyclerViewTrailers.setLayoutManager(layoutManagerTrailers);
-    }
-
-
+    //region Trailers
     private void getTrailersFor(Integer movieID) {
         String endPoint = getString(R.string.trailers_end_point_path);
         URL trailersUrl = NetworkUtility.buildTrailersUrl(movieID, endPoint);
@@ -144,13 +153,12 @@ public class DetailActivity extends AppCompatActivity implements MoviesLoaderCal
         getSupportLoaderManager().initLoader(ID_DETAIL_TRAILERS_LOADER, null, moviesLoaderCallbacks);
     }
 
-
     private void loadTrailers() {
         if (trailersList == null) {
             return;
         }
 
-        mRecycleTrailerAdapter = new TrailersAdapter(this, trailersList, new TrailerItemClickListener() {
+        RecyclerView.Adapter mRecycleTrailerAdapter = new TrailersAdapter(this, trailersList, new TrailerItemClickListener() {
             @Override
             public void onItemClick(Video video) {
                 Log.d("Video Clicked", video.getName());
@@ -162,13 +170,22 @@ public class DetailActivity extends AppCompatActivity implements MoviesLoaderCal
         mRecyclerViewTrailers.setAdapter(mRecycleTrailerAdapter);
 
     }
+    //endregion
+
+    //region Reviews
+    private void getReviewsFor(Integer movieID) {
+        String endPoint = getString(R.string.reviews_end_point_path);
+        URL reviewsUrl = NetworkUtility.buildReviewsUrl(movieID, endPoint);
+        MoviesLoaderCallbacks moviesLoaderCallbacks = new MoviesLoaderCallbacks(this, reviewsUrl, endPoint, this);
+        getSupportLoaderManager().initLoader(ID_DETAIL_REVIEWS_LOADER, null, moviesLoaderCallbacks);
+    }
 
     private void loadReviews() {
         if (trailersList == null) {
             return;
         }
 
-        mRecycleReviewAdapter = new ReviewsAdapter(this, reviewsList, new ReviewItemClickListener() {
+        RecyclerView.Adapter mRecycleReviewAdapter = new ReviewsAdapter(this, reviewsList, new ReviewItemClickListener() {
             @Override
             public void onItemClick(Review review) {
                 Log.d("Video Clicked", review.getAuthor());
@@ -177,16 +194,9 @@ public class DetailActivity extends AppCompatActivity implements MoviesLoaderCal
 
         mRecyclerViewReviews.setAdapter(mRecycleReviewAdapter);
     }
+    //endregion
 
-
-    private void getReviewsFor(Integer movieID) {
-        String endPoint = getString(R.string.reviews_end_point_path);
-        URL reviewsUrl = NetworkUtility.buildReviewsUrl(movieID, endPoint);
-        MoviesLoaderCallbacks moviesLoaderCallbacks = new MoviesLoaderCallbacks(this, reviewsUrl, endPoint, this);
-        getSupportLoaderManager().initLoader(ID_DETAIL_REVIEWS_LOADER, null, moviesLoaderCallbacks);
-    }
-
-
+    //region Click methods
     public void favoriteClick(View view) {
 
         if (movie == null) {
@@ -216,7 +226,9 @@ public class DetailActivity extends AppCompatActivity implements MoviesLoaderCal
         changeFavoriteImage();
 
     }
+    //endregion
 
+    //region Helper Methods
     private void changeFavoriteImage() {
         int favoriteResource;
 
@@ -228,9 +240,9 @@ public class DetailActivity extends AppCompatActivity implements MoviesLoaderCal
 
         mFavorite.setImageResource(favoriteResource);
     }
+    //endregion
 
-
-    // MoviesLoaderCallbacks.MoviesLoaderListener Methods
+    //region MoviesLoaderCallbacks.MoviesLoaderListener Methods
     @Override
     public void onPreExecute() {
         mProgressBar.setVisibility(View.VISIBLE);
@@ -255,7 +267,9 @@ public class DetailActivity extends AppCompatActivity implements MoviesLoaderCal
             e.printStackTrace();
         }
     }
+    //endregion
 
+    //region Cursor Loader methods
     @NonNull
     @Override
     public Loader<Cursor> onCreateLoader(int loaderId, @Nullable Bundle args) {
@@ -293,4 +307,5 @@ public class DetailActivity extends AppCompatActivity implements MoviesLoaderCal
     public void onLoaderReset(@NonNull Loader<Cursor> loader) {
 
     }
+    //endregion
 }

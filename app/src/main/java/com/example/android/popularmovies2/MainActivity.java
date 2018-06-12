@@ -1,7 +1,6 @@
 package com.example.android.popularmovies2;
 
 import android.content.Intent;
-import android.content.res.Configuration;
 import android.database.Cursor;
 import android.net.Uri;
 import android.os.Bundle;
@@ -43,6 +42,7 @@ import butterknife.ButterKnife;
 
 public class MainActivity extends AppCompatActivity implements LoaderManager.LoaderCallbacks<Cursor>, MoviesLoaderCallbacks.MoviesLoaderListener {
 
+    //region Binder Variables
     /* Bind Views: ButterKnife */
     @BindView(R.id.recyclerView)
     RecyclerView recyclerView;
@@ -52,15 +52,20 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @BindView(R.id.progressBar)
     ProgressBar mProgressBar;
+    //endregion
 
+    //region Private Variables
     private RecyclerView.Adapter mAdapter;
     private RecyclerView.LayoutManager mLayoutManager;
     private List<Movie> moviesList;
     private Uri mUri;
+    //endregion
 
+    //region Private Static Variables
     private static int GRID_COLUMNS = 2;
     private static final int ID_MAIN_ACTIVITY_LOADER = 123;
     private static final int ID_MAIN_ACTIVITY_DATALOADER = 111;
+    public static final int INDEX_MOVIE_ID = 0;
 
     private static final String SORT_TYPE_POPULAR = "popular";
     private static final String INTENT_KEY = "movie_detail";
@@ -68,21 +73,13 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     private static final String SORT_TYPE_FAVORITES = "favorites";
     private static final String SORT_TYPE_DEFAULT = "Select Sort Type";
 
-
     public static final String[] MOVIE_DETAIL_PROJECTION = {
             PopularMoviesContract.PopularMoviesEntry.COLUMN_MOVIE_ID,
             PopularMoviesContract.PopularMoviesEntry.COLUMN_MOVIE_TITLE
     };
+    //endregion
 
-    public static final int INDEX_MOVIE_ID = 0;
-
-
-    @Override
-    public void onConfigurationChanged(Configuration newConfig) {
-
-        super.onConfigurationChanged(newConfig);
-    }
-
+    //region Activity Lifecycle methods
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -95,7 +92,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         getMovies();
         setupSpinner();
     }
+    //endregion
 
+    //region UI Setup methods
     private void setupSpinner() {
         final Map<String, String> map = new HashMap<>();
         map.put("Top Rated", SORT_TYPE_TOP_RATED);
@@ -127,7 +126,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
                 String mappedSpinner = map.get(item);
                 Log.v("Spinner:",mappedSpinner);
                 if (mappedSpinner.equals(SORT_TYPE_FAVORITES)) {
-                    getSupportLoaderManager().initLoader(ID_MAIN_ACTIVITY_LOADER, null, MainActivity.this);
+                    getSupportLoaderManager().initLoader(ID_MAIN_ACTIVITY_LOADER, null, MainActivity.this).forceLoad();
                 } else {
                     URL moviesURL = NetworkUtility.buildMoviesUrl(mappedSpinner);
                     mSpinner.setVisibility(View.GONE);
@@ -147,7 +146,9 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         mSpinner.setVisibility(View.VISIBLE);
         mSpinner.performClick();
     }
+    //endregion
 
+    //region Movies
     private void getMovies() {
         String endPoint = getString(R.string.popular_end_point_path);
         URL moviesURL = NetworkUtility.buildMoviesUrl(endPoint);
@@ -155,7 +156,6 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         MoviesLoaderCallbacks moviesLoaderCallbacks = new MoviesLoaderCallbacks(this, moviesURL, endPoint, this);
         getSupportLoaderManager().initLoader(ID_MAIN_ACTIVITY_DATALOADER, null, moviesLoaderCallbacks);
     }
-
 
     private void loadMovies() {
         if (moviesList == null) {
@@ -174,7 +174,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
         recyclerView.setAdapter(mAdapter);
 
     }
-
+    //endregion
 
     //region MoviesLoaderCallbacks.MoviesLoaderListener call back methods
     @Override
@@ -184,6 +184,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
     @Override
     public void onPostExecute(String jsonString, String endPointFor) {
+        getSupportLoaderManager().destroyLoader(ID_MAIN_ACTIVITY_DATALOADER);
         mProgressBar.setVisibility(View.INVISIBLE);
         try {
           moviesList = JsonUtils.getMoviesFromJSONString(jsonString);
@@ -246,7 +247,7 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
     }
     //endregion
 
-
+    //region Menu methods
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         MenuInflater menuInflater = getMenuInflater();
@@ -265,5 +266,5 @@ public class MainActivity extends AppCompatActivity implements LoaderManager.Loa
 
         return super.onOptionsItemSelected(item);
     }
-
+    //endregion
 }

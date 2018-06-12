@@ -17,10 +17,8 @@ public class NetworkUtility {
     private static final String MOVIE_BASE_URL = "api.themoviedb.org";
     private static final String MOVIE_APPENDED_PATH = "3/movie";
 
-
     private static final String MOVIE_API_KEY = "";
     private static final String MOVIE_QUERY_API_PARAM = "api_key";
-
 
     public static URL buildMoviesUrl(String sortType) {
 
@@ -110,7 +108,4 @@ public class NetworkUtility {
             urlConnection.disconnect();
         }
     }
-
-
-
 }

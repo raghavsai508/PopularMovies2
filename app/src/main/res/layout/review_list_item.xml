@@ -16,6 +16,9 @@
         android:layout_marginStart="8dp"
         android:layout_marginTop="16dp"
         android:text="author"
+        android:textColor="@android:color/black"
+        android:textSize="18sp"
+        app:fontFamily="sans-serif"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
@@ -39,9 +42,25 @@
         android:layout_marginEnd="8dp"
         android:layout_marginRight="8dp"
         android:layout_marginTop="16dp"
+        android:autoLink="web"
         android:text="url"
+        android:textColorLink="@android:color/holo_blue_dark"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="@+id/tv_content"
         app:layout_constraintTop_toBottomOf="@+id/tv_content" />
+
+    <View
+        android:id="@+id/list_separator"
+        android:background="@android:color/black"
+        android:layout_width="wrap_content"
+        android:layout_height="2dp"
+        android:layout_marginStart="8dp"
+        android:layout_marginLeft="8dp"
+        android:layout_marginEnd="8dp"
+        android:layout_marginRight="8dp"
+        android:layout_marginTop="8dp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_url" />
 
 </android.support.constraint.ConstraintLayout>

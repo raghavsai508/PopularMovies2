@@ -31,13 +31,10 @@ public class TrailersAdapter extends RecyclerView.Adapter<TrailersAdapter.ViewHo
 
     public class ViewHolder extends RecyclerView.ViewHolder {
 
-        //        @BindView(R.id.iv_play)
-//        public ImageView imagePlay;
-
         @BindView(R.id.tv_trailer)
         public TextView textViewTrailer;
 
-        public ViewHolder(View view) {
+        private ViewHolder(View view) {
             super(view);
             ButterKnife.bind(this,view);
         }
@@ -61,7 +58,7 @@ public class TrailersAdapter extends RecyclerView.Adapter<TrailersAdapter.ViewHo
 
     @Override
     public void onBindViewHolder(@NonNull ViewHolder holder, int position) {
-        String stringTrailer = "Trailer"+position;
+        String stringTrailer = "Trailer "+(position+1);
         holder.textViewTrailer.setText(stringTrailer);
     }
 
